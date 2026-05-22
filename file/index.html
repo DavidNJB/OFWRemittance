@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OFW Padala — Fast, Low-Fee Remittance</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23111'/><text x='50' y='68' font-size='52' font-weight='900' text-anchor='middle' fill='white' font-family='sans-serif'>P</text></svg>" />
+    <style>
+
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+      body { font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; background: #f4f4f4; color: #111; min-height: 100vh; }
+      button { cursor: pointer; border: none; background: none; font-family: inherit; }
+      input, select, textarea { font-family: inherit; font-size: 14px; }
+      table { border-collapse: collapse; width: 100%; }
+      a { color: inherit; text-decoration: none; }
+
+      #sidebar {
+        position: fixed; top: 0; left: 0; bottom: 0; width: 252px;
+        background: #111; display: flex; flex-direction: column;
+        z-index: 30; box-shadow: 2px 0 12px rgba(0,0,0,.18);
+      }
+      #main { margin-left: 252px; min-height: 100vh; display: flex; flex-direction: column; }
+      #topbar {
+        background: #fff; border-bottom: 1px solid #e4e4e4;
+        padding: 14px 32px; display: flex; align-items: center;
+        justify-content: space-between; position: sticky; top: 0; z-index: 20;
+      }
+      #content { padding: 28px 32px; flex: 1; }
+
+      .sb-brand { padding: 22px 20px; border-bottom: 1px solid #222; display: flex; align-items: center; gap: 12px; }
+      .sb-brand h1 { color: #fff; font-size: 17px; font-weight: 800; letter-spacing: -.3px; }
+      .sb-brand p  { color: #666; font-size: 11px; margin-top: 2px; }
+      .sb-tagline  { padding: 12px 20px; font-size: 11px; color: #555; line-height: 1.5; border-bottom: 1px solid #1c1c1c; }
+      .sb-nav { flex: 1; padding: 12px; display: flex; flex-direction: column; gap: 3px; }
+      .sb-footer { padding: 14px 16px; border-top: 1px solid #222; display: flex; align-items: center; gap: 10px; }
+      .avatar { width: 36px; height: 36px; border-radius: 50%; background: #2a2a2a; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex-shrink: 0; }
+      .sb-footer .name { color: #fff; font-size: 13px; font-weight: 600; }
+      .sb-footer .loc  { color: #666; font-size: 11px; margin-top: 1px; }
+
+      .nav-btn { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; color: #888; transition: background .12s, color .12s; }
+      .nav-btn:hover  { background: #1e1e1e; color: #ddd; }
+      .nav-btn.active { background: #fff; color: #111; font-weight: 700; }
+      .nav-badge { margin-left: auto; background: #333; color: #ccc; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 99px; }
+      .nav-btn.active .nav-badge { background: #111; color: #fff; }
+
+      .topbar-left h2 { font-size: 18px; font-weight: 700; color: #111; }
+      .topbar-left p  { font-size: 12px; color: #999; margin-top: 2px; }
+      .topbar-right   { display: flex; align-items: center; gap: 16px; }
+      .balance-block  { text-align: right; }
+      .balance-label  { font-size: 11px; color: #aaa; }
+      #header-balance { font-size: 20px; font-weight: 800; color: #111; letter-spacing: -.5px; }
+
+      .btn-primary  { background: #111; color: #fff; padding: 9px 18px; border-radius: 8px; font-size: 13px; font-weight: 600; transition: background .12s; display: inline-block; }
+      .btn-primary:hover { background: #2a2a2a; }
+      .btn-outline  { background: #fff; color: #333; border: 1px solid #ddd; padding: 9px 18px; border-radius: 8px; font-size: 13px; font-weight: 600; transition: background .12s; }
+      .btn-outline:hover { background: #f5f5f5; }
+      .btn-sm       { padding: 7px 14px; font-size: 12px; border-radius: 7px; }
+      .btn-chip     { background: #fff; color: #333; border: 1px solid #ddd; padding: 6px 14px; border-radius: 8px; font-size: 13px; transition: background .12s; }
+      .btn-chip:hover { background: #f4f4f4; }
+      .btn-danger   { background: #fff; color: #999; border: 1px solid #e4e4e4; padding: 6px 12px; border-radius: 7px; font-size: 12px; font-weight: 500; transition: color .12s; }
+      .btn-danger:hover { color: #111; border-color: #bbb; }
+
+      .card { background: #fff; border: 1px solid #e4e4e4; border-radius: 12px; }
+
+      .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px; }
+      .stat-card { padding: 20px; }
+
+      .stat-label { font-size: 12px; color: #999; margin-bottom: 5px; }
+      .stat-value { font-size: 22px; font-weight: 800; color: #111; letter-spacing: -.5px; }
+      .stat-sub   { font-size: 11px; color: #bbb; margin-top: 3px; }
+      .stat-green { color: #2d7a2d; }
+
+      .panel-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+      .panel { padding: 20px; }
+      .panel-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+      .panel-header h3 { font-size: 14px; font-weight: 700; color: #111; }
+      .link { color: #555; font-size: 12px; text-decoration: underline; background: none; }
+      .link:hover { color: #111; }
+
+      .section-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+      .section-head h3 { font-size: 16px; font-weight: 700; color: #111; }
+      .section-head p  { font-size: 12px; color: #999; margin-top: 3px; }
+
+      .recipients-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+      .recipient-card {
+        background: #fff; border: 1px solid #e4e4e4; border-radius: 12px;
+        padding: 20px; display: flex; flex-direction: column; gap: 12px;
+        transition: box-shadow .15s, border-color .15s;
+      }
+      .recipient-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.07); border-color: #ccc; }
+      .rc-top { display: flex; align-items: center; gap: 12px; }
+      .rc-avatar { width: 44px; height: 44px; border-radius: 50%; background: #111; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 700; flex-shrink: 0; }
+      .rc-name { font-size: 15px; font-weight: 700; color: #111; }
+      .rc-rel  { font-size: 12px; color: #888; margin-top: 2px; }
+      .rc-meta { display: flex; flex-direction: column; gap: 4px; }
+      .rc-meta-row { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #666; }
+      .rc-badge { display: inline-block; background: #f0f0f0; color: #444; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 5px; }
+      .rc-actions { display: flex; gap: 8px; margin-top: 2px; }
+      .rc-actions .btn-primary { flex: 1; text-align: center; }
+
+      .form-wrap { max-width: 620px; margin: 0 auto; }
+      .form-card { padding: 28px; }
+      .form-card h3 { font-size: 17px; font-weight: 700; color: #111; }
+      .form-card .subtitle { font-size: 13px; color: #888; margin-top: 4px; margin-bottom: 22px; }
+      .form-row  { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+      .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+      .form-group { display: flex; flex-direction: column; gap: 5px; margin-bottom: 14px; }
+      label { font-size: 12px; font-weight: 600; color: #555; text-transform: uppercase; letter-spacing: .04em; }
+      .input-wrap { position: relative; }
+      .input-prefix { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 13px; font-weight: 600; color: #aaa; pointer-events: none; }
+      input[type="text"], input[type="number"], input[type="date"], input[type="tel"], select {
+        width: 100%; border: 1px solid #ddd; border-radius: 8px; padding: 10px 12px;
+        font-size: 14px; color: #111; background: #fff; outline: none;
+        transition: border-color .12s, box-shadow .12s;
+      }
+      input:focus, select:focus { border-color: #111; box-shadow: 0 0 0 3px rgba(0,0,0,.07); }
+      input[readonly] { background: #f8f8f8; color: #888; cursor: not-allowed; }
+      .input-has-prefix input { padding-left: 30px; }
+
+      #recipient-selector { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
+      .rc-pill {
+        display: flex; align-items: center; gap: 8px; padding: 8px 14px;
+        border: 1.5px solid #e0e0e0; border-radius: 99px; background: #fff;
+        font-size: 13px; font-weight: 500; color: #555; cursor: pointer; transition: all .12s;
+      }
+      .rc-pill:hover  { border-color: #999; color: #111; }
+      .rc-pill.active { border-color: #111; background: #111; color: #fff; }
+      .rc-pill .pill-avatar { width: 22px; height: 22px; border-radius: 50%; background: #ddd; color: #555; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; }
+      .rc-pill.active .pill-avatar { background: #444; color: #fff; }
+
+      #conversion-box { background: #f8f8f8; border: 1px solid #e4e4e4; border-radius: 10px; padding: 16px; margin-bottom: 14px; }
+      .conv-row { display: flex; justify-content: space-between; align-items: center; font-size: 13px; margin-bottom: 8px; }
+      .conv-row:last-child { margin-bottom: 0; }
+      .conv-label { color: #888; }
+      .conv-val   { font-weight: 600; color: #111; }
+      .conv-divider { border: none; border-top: 1px solid #e4e4e4; margin: 10px 0; }
+      #conv-receive { font-size: 20px; font-weight: 800; color: #111; letter-spacing: -.5px; }
+      .conv-savings { font-size: 11px; color: #2d7a2d; font-weight: 600; margin-top: 6px; padding: 4px 10px; background: #f0faf0; border-radius: 5px; display: inline-block; }
+
+      .table-header { padding: 18px 22px; border-bottom: 1px solid #f0f0f0; display: flex; align-items: center; justify-content: space-between; }
+      .table-header h3 { font-size: 14px; font-weight: 700; color: #111; }
+      .table-header p  { font-size: 12px; color: #aaa; margin-top: 2px; }
+      .data-table thead tr { background: #fafafa; }
+      .data-table thead th { text-align: left; padding: 10px 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: #aaa; }
+      .data-table thead th.right  { text-align: right; }
+      .data-table thead th.center { text-align: center; }
+      .data-table tbody tr { border-top: 1px solid #f4f4f4; transition: background .1s; }
+      .data-table tbody tr:hover { background: #fafafa; }
+      .data-table td { padding: 13px 20px; color: #555; vertical-align: middle; font-size: 13px; }
+      .data-table td.right  { text-align: right; }
+      .data-table td.center { text-align: center; }
+      .td-bold { font-weight: 700; color: #111; }
+      .td-sub  { font-size: 11px; color: #bbb; margin-top: 2px; }
+      .badge { display: inline-block; padding: 3px 9px; border-radius: 5px; font-size: 11px; font-weight: 700; background: #efefef; color: #555; }
+
+      .expense-layout { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 16px; }
+
+      .empty { text-align: center; padding: 40px 20px; color: #ccc; font-size: 13px; line-height: 1.6; }
+      .empty-icon { display: none; }
+
+      .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 50; align-items: center; justify-content: center; }
+      .modal-overlay.open { display: flex; }
+      .modal-box { background: #fff; border-radius: 14px; padding: 28px; width: 480px; max-height: 90vh; overflow-y: auto; box-shadow: 0 16px 48px rgba(0,0,0,.18); }
+      .modal-box h3   { font-size: 17px; font-weight: 700; color: #111; margin-bottom: 4px; }
+      .modal-box .sub { font-size: 13px; color: #888; margin-bottom: 22px; }
+      .modal-actions  { display: flex; gap: 10px; margin-top: 6px; }
+      .modal-actions button { flex: 1; padding: 11px; border-radius: 8px; font-size: 14px; font-weight: 600; }
+      .chip-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
+
+      #toast { display: none; position: fixed; bottom: 24px; right: 24px; background: #111; color: #fff; padding: 11px 18px; border-radius: 10px; font-size: 13px; font-weight: 500; box-shadow: 0 4px 20px rgba(0,0,0,.2); z-index: 60; max-width: 340px; }
+      #toast.show { display: block; }
+
+      .hidden { display: none !important; }
+      .filter-row { display: flex; align-items: center; gap: 10px; }
+      .filter-select { border: 1px solid #ddd; border-radius: 8px; padding: 7px 10px; font-size: 12px; color: #555; background: #fff; outline: none; }
+      .divider { border: none; border-top: 1px solid #f0f0f0; margin: 14px 0; }
+      .fee-note { font-size: 11px; color: #2d7a2d; font-weight: 600; }
+
+      #wallet-area { display: none; align-items: center; gap: 8px; flex-wrap: wrap; }
+      .net-pill    { font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 5px; border: 1px solid; white-space: nowrap; }
+      .wallet-addr { font-size: 12px; font-weight: 600; color: #333; font-family: monospace; }
+      .wallet-bal  { font-size: 11px; color: #555; font-weight: 600; }
+
+
+      .onchain-box { background: #f4fbf4; border: 1.5px solid #b8ddb8; border-radius: 10px; padding: 18px; margin-bottom: 14px; }
+      .onchain-box h4 { font-size: 13px; font-weight: 700; color: #1a6e1a; margin-bottom: 12px; }
+      .btn-bridge-morph { color: #1a6e1a; border-color: #b8ddb8; }
+      .btn-bridge-morph:hover { background: #f4fbf4; }
+      #onchain-amount-preview { font-size: 12px; color: #555; margin-top: 8px; min-height: 18px; }
+
+      #tx-link-banner { display: none; background: #f0faf0; border: 1px solid #b8ddb8; border-radius: 8px; padding: 10px 16px; font-size: 12px; color: #333; margin-bottom: 14px; }
+    </style>
+  </head>
+  <body>
+
+    <aside id="sidebar">
+      <div class="sb-brand">
+        <div>
+          <h1>OFW Padala</h1>
+          <p>Fast · Low-Fee · Reliable</p>
+        </div>
+      </div>
+      <div class="sb-tagline">Help money move the way people expect it to — fast, fair, and without hidden charges.</div>
+
+      <nav class="sb-nav">
+        <button onclick="showPage('dashboard')"    id="nav-dashboard"    class="nav-btn active">Dashboard</button>
+        <button onclick="showPage('recipients')"   id="nav-recipients"   class="nav-btn">Recipients <span class="nav-badge" id="nav-recipients-count">0</span></button>
+        <button onclick="showPage('send')"         id="nav-send"         class="nav-btn">Send Padala</button>
+        <button onclick="showPage('transactions')" id="nav-transactions" class="nav-btn">Remittance History</button>
+        <button onclick="showPage('expenses')"     id="nav-expenses"     class="nav-btn">How Padala Was Used</button>
+      </nav>
+
+      <div class="sb-footer">
+        <div class="avatar">GM</div>
+        <div>
+          <div class="name">Gigi Murin</div>
+          <div class="loc">OFW · Dubai, UAE</div>
+        </div>
+      </div>
+    </aside>
+
+    <main id="main">
+      <header id="topbar">
+        <div class="topbar-left">
+          <h2 id="page-title">Dashboard</h2>
+          <p id="page-subtitle">Your remittance overview</p>
+        </div>
+        <div class="topbar-right">
+          <div class="balance-block">
+            <div class="balance-label">Wallet Balance</div>
+            <div id="header-balance">₱0.00</div>
+          </div>
+          <button class="btn-primary" onclick="showTopUpModal()">+ Top Up</button>
+          <a href="https://bridge.morphl2.io" target="_blank" rel="noopener noreferrer" class="btn-outline btn-bridge-morph btn-sm">Bridge to Morph ↗</a>
+          <button class="btn-outline" id="wallet-connect-btn" onclick="connectWallet()">Connect Wallet</button>
+          <div id="wallet-area"></div>
+        </div>
+      </header>
+
+      <div id="content">
+
+        <div id="page-dashboard">
+          <div class="stat-grid">
+            <div class="card stat-card">
+              <div class="stat-label">Total Sent to PH</div>
+              <div class="stat-value" id="stat-total-sent">₱0.00</div>
+              <div class="stat-sub" id="stat-sent-count">0 transfers</div>
+            </div>
+            <div class="card stat-card">
+              <div class="stat-label">Sent This Month</div>
+              <div class="stat-value" id="stat-month-sent">₱0.00</div>
+              <div class="stat-sub" id="stat-month-count">0 transfers</div>
+            </div>
+            <div class="card stat-card">
+              <div class="stat-label">Saved Recipients</div>
+              <div class="stat-value" id="stat-recipients">0</div>
+              <div class="stat-sub">family members</div>
+            </div>
+            <div class="card stat-card">
+              <div class="stat-label">Fees Saved vs Banks</div>
+              <div class="stat-value stat-green" id="stat-fees-saved">₱0.00</div>
+              <div class="stat-sub">at 2% vs ~5% bank rate</div>
+            </div>
+          </div>
+
+          <div class="panel-grid">
+            <div class="card panel">
+              <div class="panel-header">
+                <h3>Recent Padala Sent</h3>
+                <button class="link" onclick="showPage('transactions')">View all →</button>
+              </div>
+              <div id="recent-transactions">
+                <div class="empty">No transfers yet. Send your first padala!</div>
+              </div>
+            </div>
+            <div class="card panel">
+              <div class="panel-header">
+                <h3>How Padala Is Used in PH</h3>
+                <button class="link" onclick="showPage('expenses')">View all →</button>
+              </div>
+              <div id="expense-chart">
+                <div class="empty">No usage logged yet</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="page-recipients" class="hidden">
+          <div class="section-head">
+            <div>
+              <h3>Saved Recipients</h3>
+              <p>Your family members in the Philippines — one tap to send.</p>
+            </div>
+            <button class="btn-primary" onclick="showAddRecipientModal()">+ Add Recipient</button>
+          </div>
+          <div id="recipients-grid">
+            <div class="empty" style="padding:60px">No recipients yet.<br>Add your family members to send padala quickly.</div>
+          </div>
+        </div>
+
+        <div id="page-send" class="hidden">
+          <div class="form-wrap">
+            <div class="card form-card">
+              <h3>Send Padala</h3>
+              <p class="subtitle">Only 2% fee — no hidden charges. Your family receives pesos instantly.</p>
+
+              <div id="recipient-selector-wrap">
+                <label style="display:block;margin-bottom:8px">Select Saved Recipient</label>
+                <div id="recipient-selector"></div>
+                <hr class="divider" />
+              </div>
+
+              <form id="send-form" onsubmit="handleSend(event)">
+                <div class="form-row">
+                  <div class="form-group" style="margin-bottom:0">
+                    <label>Recipient Name (in PH)</label>
+                    <input type="text" id="recipient-name" placeholder="e.g. Maria dela Cruz" required />
+                  </div>
+                  <div class="form-group" style="margin-bottom:0">
+                    <label>Relationship</label>
+                    <select id="recipient-rel">
+                      <option>Spouse</option><option>Parent</option><option>Child</option>
+                      <option>Sibling</option><option>Other</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group" style="margin-bottom:0">
+                    <label>Amount to Send (PHP)</label>
+                    <div class="input-wrap input-has-prefix">
+                      <span class="input-prefix">₱</span>
+                      <input type="number" id="send-amount" placeholder="0.00" min="100" required oninput="updateConversion()" />
+                    </div>
+                  </div>
+                  <div class="form-group" style="margin-bottom:0">
+                    <label>Your Working Currency</label>
+                    <select id="dest-currency" onchange="updateConversion()">
+                      <option value="AED" selected>AED — UAE Dirham</option>
+                      <option value="USD">USD — US Dollar</option>
+                      <option value="SAR">SAR — Saudi Riyal</option>
+                      <option value="SGD">SGD — Singapore Dollar</option>
+                      <option value="HKD">HKD — Hong Kong Dollar</option>
+                      <option value="EUR">EUR — Euro</option>
+                      <option value="GBP">GBP — British Pound</option>
+                      <option value="JPY">JPY — Japanese Yen</option>
+                      <option value="KRW">KRW — Korean Won</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div id="tx-link-banner"></div>
+
+                <div id="conversion-box" class="hidden">
+                  <div class="conv-row"><span class="conv-label">Amount sent</span><span class="conv-val" id="conv-send">₱0.00</span></div>
+                  <div class="conv-row"><span class="conv-label">Our fee (2%)</span><span class="conv-val" style="color:#888" id="conv-fee">−₱0.00</span></div>
+                  <div class="conv-row"><span class="conv-label">Exchange rate</span><span style="color:#aaa;font-size:12px" id="conv-rate">—</span></div>
+                  <hr class="conv-divider" />
+                  <div class="conv-row"><span class="conv-label" style="font-weight:700;color:#111;font-size:14px">Family receives</span><span id="conv-receive">—</span></div>
+                  <div><span class="conv-savings" id="conv-savings">You save ₱0 vs traditional banks</span></div>
+                </div>
+
+                <div id="onchain-section" class="hidden">
+                  <div class="onchain-box">
+                    <h4>Onchain Transfer via Morph L2</h4>
+                    <div class="form-row">
+                      <div class="form-group" style="margin-bottom:0">
+                        <label>Stablecoin</label>
+                        <select id="onchain-token" onchange="updateOnchainPreview()">
+                          <option value="USDT.e">USDT.e — Bridged Tether</option>
+                          <option value="USDC.e">USDC.e — Bridged USD Coin</option>
+                        </select>
+                      </div>
+                      <div class="form-group" style="margin-bottom:0">
+                        <label>Recipient Wallet Address</label>
+                        <input type="text" id="onchain-recipient-addr" placeholder="0x…" />
+                      </div>
+                    </div>
+                    <div id="onchain-amount-preview"></div>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label>Purpose of Remittance</label>
+                  <select id="send-purpose">
+                    <option>Family Support (Allowance)</option>
+                    <option>School / Tuition</option>
+                    <option>Medical / Hospital</option>
+                    <option>Housing / Rent</option>
+                    <option>Emergency</option>
+                    <option>Savings / Investment</option>
+                    <option>Special Occasion</option>
+                    <option>Other</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label>Message (optional)</label>
+                  <input type="text" id="send-note" placeholder="e.g. Para sa tuition, ingat po kayo!" />
+                </div>
+
+                <button type="submit" class="btn-primary" style="width:100%;padding:13px;font-size:14px;border-radius:8px">
+                  Send Padala Now
+                </button>
+                <p class="fee-note" style="text-align:center;margin-top:10px">Only 2% fee · No hidden charges · Instant transfer</p>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <div id="page-transactions" class="hidden">
+          <div class="card" style="overflow:hidden">
+            <div class="table-header">
+              <div>
+                <h3>All Padala Sent</h3>
+                <p>Every remittance you've sent home</p>
+              </div>
+              <div class="filter-row">
+                <select id="filter-status" class="filter-select" onchange="renderTransactions()">
+                  <option value="">All Status</option>
+                  <option value="Completed">Completed</option>
+                  <option value="Pending">Pending</option>
+                </select>
+              </div>
+            </div>
+            <div id="transactions-table">
+              <div class="empty">No remittances yet. Send your first padala!</div>
+            </div>
+          </div>
+        </div>
+
+        <div id="page-expenses" class="hidden">
+          <div class="expense-layout">
+            <div class="card" style="padding:24px">
+              <h3 style="font-size:15px;font-weight:700;color:#111;margin-bottom:3px">Log How Your Padala Was Used</h3>
+              <p style="font-size:12px;color:#999;margin-bottom:18px">Record what your family spent the money on in the Philippines</p>
+              <form id="expense-form" onsubmit="handleExpense(event)">
+                <div class="form-row">
+                  <div class="form-group" style="margin-bottom:0">
+                    <label>Spent On</label>
+                    <select id="exp-category">
+                      <option>Groceries / Food</option>
+                      <option>House Rent / Mortgage</option>
+                      <option>Utilities (Meralco, Water, Gas)</option>
+                      <option>School / Tuition</option>
+                      <option>Medical / Hospital / Medicine</option>
+                      <option>Transportation / Fare</option>
+                      <option>Clothing / Shoes</option>
+                      <option>Load / Phone Bill</option>
+                      <option>Special Occasion / Celebration</option>
+                      <option>Loan Payment / Debt</option>
+                      <option>Family Savings</option>
+                      <option>Other</option>
+                    </select>
+                  </div>
+                  <div class="form-group" style="margin-bottom:0">
+                    <label>Amount (PHP)</label>
+                    <div class="input-wrap input-has-prefix">
+                      <span class="input-prefix">₱</span>
+                      <input type="number" id="exp-amount" placeholder="0.00" min="1" required />
+                    </div>
+                  </div>
+                </div>
+                <div class="form-row">
+                  <div class="form-group" style="margin-bottom:0">
+                    <label>Date Spent</label>
+                    <input type="date" id="exp-date" required />
+                  </div>
+                  <div class="form-group" style="margin-bottom:0">
+                    <label>Description</label>
+                    <input type="text" id="exp-desc" placeholder="e.g. Monthly Meralco bill, school supplies..." />
+                  </div>
+                </div>
+                <button type="submit" class="btn-primary btn-sm" style="margin-top:4px">+ Log Usage</button>
+              </form>
+            </div>
+            <div class="card" style="padding:22px">
+              <h3 style="font-size:14px;font-weight:700;color:#111;margin-bottom:3px">This Month in PH</h3>
+              <p style="font-size:12px;color:#999;margin-bottom:14px">Where your padala went this month</p>
+              <div id="expense-summary"><div class="empty" style="padding:20px">Nothing logged this month</div></div>
+            </div>
+          </div>
+
+          <div class="card" style="overflow:hidden">
+            <div class="table-header">
+              <div><h3>Padala Usage History</h3><p>Full record of how your remittances were used in the Philippines</p></div>
+            </div>
+            <div id="expense-list"><div class="empty">No usage logged yet.</div></div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+
+    <div id="topup-modal" class="modal-overlay">
+      <div class="modal-box">
+        <h3>Top Up Wallet</h3>
+        <p class="sub">Add funds to your padala wallet</p>
+        <div class="form-group">
+          <label>Amount (PHP)</label>
+          <div class="input-wrap input-has-prefix">
+            <span class="input-prefix">₱</span>
+            <input type="number" id="topup-amount" placeholder="0.00" min="100" />
+          </div>
+        </div>
+        <div class="chip-row">
+          <button class="btn-chip" onclick="setTopUp(1000)">₱1,000</button>
+          <button class="btn-chip" onclick="setTopUp(5000)">₱5,000</button>
+          <button class="btn-chip" onclick="setTopUp(10000)">₱10,000</button>
+          <button class="btn-chip" onclick="setTopUp(20000)">₱20,000</button>
+        </div>
+        <div class="modal-actions">
+          <button class="btn-outline" onclick="hideTopUpModal()">Cancel</button>
+          <button class="btn-primary" onclick="handleTopUp()">Add Funds</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="recipient-modal" class="modal-overlay">
+      <div class="modal-box">
+        <h3 id="recipient-modal-title">Add Recipient</h3>
+        <p class="sub">Save a family member so you can send padala in one tap.</p>
+        <input type="hidden" id="rc-edit-id" />
+
+        <div class="form-row">
+          <div class="form-group" style="margin-bottom:0">
+            <label>Full Name</label>
+            <input type="text" id="rc-name" placeholder="e.g. Maria dela Cruz" />
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label>Relationship</label>
+            <select id="rc-rel">
+              <option>Spouse</option><option>Parent</option><option>Child</option>
+              <option>Sibling</option><option>Other</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Location in Philippines</label>
+          <input type="text" id="rc-location" placeholder="e.g. Cebu City, Cebu" />
+        </div>
+
+        <div class="form-group">
+          <label>Wallet Address on Morph <span style="font-weight:400;color:#bbb">(for onchain transfers)</span></label>
+          <input type="text" id="rc-wallet-address" placeholder="0x… (optional)" />
+        </div>
+
+        <div class="form-row">
+          <div class="form-group" style="margin-bottom:0">
+            <label>Receive Via</label>
+            <select id="rc-account-type">
+              <option>GCash</option>
+              <option>Maya (PayMaya)</option>
+              <option>BDO</option>
+              <option>BPI</option>
+              <option>Metrobank</option>
+              <option>UnionBank</option>
+              <option>Cash Pickup</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label>Account / Mobile No.</label>
+            <input type="tel" id="rc-account-num" placeholder="e.g. 09171234567" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Default Send Currency</label>
+          <select id="rc-default-currency">
+            <option value="AED">AED — UAE Dirham</option>
+            <option value="USD">USD — US Dollar</option>
+            <option value="SAR">SAR — Saudi Riyal</option>
+            <option value="SGD">SGD — Singapore Dollar</option>
+            <option value="HKD">HKD — Hong Kong Dollar</option>
+            <option value="EUR">EUR — Euro</option>
+            <option value="GBP">GBP — British Pound</option>
+            <option value="JPY">JPY — Japanese Yen</option>
+            <option value="KRW">KRW — Korean Won</option>
+          </select>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn-outline" onclick="hideRecipientModal()">Cancel</button>
+          <button class="btn-primary" onclick="saveRecipient()">Save Recipient</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="toast"></div>
+
+    <script src="script.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.0/dist/ethers.umd.min.js"></script>
+    <script src="web3.js"></script>
+  </body>
+</html>
