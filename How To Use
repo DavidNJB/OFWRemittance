@@ -1,0 +1,113 @@
+# Installation & Setup
+
+Follow these steps to run OFW Padala locally.
+
+## 1. Clone the Repository
+
+```bash
+git clone https://github.com/your-username/ofw-padala.git
+cd ofw-padala
+```
+
+---
+
+## 2. Open the Project
+
+Since the project is built with HTML, CSS, and JavaScript, you can run it directly in the browser.
+
+### Option A — Open Directly
+Open `index.html` in your browser.
+
+### Option B — Use VS Code Live Server (Recommended)
+
+1. Install the **Live Server** extension in VS Code
+2. Right-click `index.html`
+3. Click **Open with Live Server**
+
+---
+
+## 3. Connect MetaMask
+
+1. Install MetaMask:
+   https://metamask.io/download/
+
+2. Add the Morph Mainnet network to MetaMask
+
+3. Fund your wallet with:
+   - ETH for gas
+   - USDT.e or USDC.e for transfers
+
+---
+
+## 4. Bridge Assets to Morph
+
+Use the official Morph bridge:
+
+https://bridge.morphl2.io
+
+Bridge USDT.e or USDC.e to Morph L2 before testing transfers.
+
+---
+
+## 5. Start Using OFW Padala
+
+Features currently available:
+- Wallet connection
+- Recipient management
+- Stablecoin transfer simulation/live transfer
+- Transaction history
+- Multi-currency preview
+
+---
+
+# Project Structure
+
+```bash
+OFW-Padala/
+│
+├── index.html
+├── style.css
+├── script.js
+├── assets/
+│   ├── images/
+│   └── icons/
+└── README.md
+```
+
+---
+
+# Tech Stack
+
+- HTML
+- CSS
+- JavaScript
+- Morph L2
+- MetaMask
+- Stablecoins (USDT.e / USDC.e)
+- Netlify
+
+---
+
+# Deployment
+
+This project can be deployed easily using Netlify.
+
+## Deploy to Netlify
+
+1. Push the project to GitHub
+2. Go to https://netlify.com
+3. Import your repository
+4. Deploy the site
+
+No build command is required for static deployment.
+
+---
+
+# Future Backend Setup
+
+Planned integrations:
+- Netlify Database
+- Netlify Identity
+- Serverless Functions
+- Smart Contracts on Morph L2
+- GCash/Maya off-ramp support
