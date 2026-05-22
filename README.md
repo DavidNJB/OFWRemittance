@@ -138,4 +138,4 @@ The infrastructure already exists. Morph L2 provides the speed, affordability, a
 
 ## Created For
 
-Morph Build in Payments Hackathon 🚀
+Morph Build in Payments Hackathon
