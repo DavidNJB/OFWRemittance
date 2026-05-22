@@ -1,4 +1,4 @@
-# OFW Padala 🇵🇭💸
+# OFW Padala 🇵🇭
 
 A Cross-Border Remittance and Expense Monitoring Platform for Overseas Filipino Workers powered by Morph L2.
 
