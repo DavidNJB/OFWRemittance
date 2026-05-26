@@ -6,8 +6,8 @@ const CURRENCY_SYMBOLS = {
   USD: "$", AED: "د.إ", SAR: "﷼", SGD: "S$",
   HKD: "HK$", EUR: "€", GBP: "£", JPY: "¥", KRW: "₩",
 };
-const FEE_RATE      = 0.02;   // Our fee: 2%
-const BANK_FEE_RATE = 0.05;   // Traditional bank/remittance center: ~5%
+const FEE_RATE      = 0.02;   
+const BANK_FEE_RATE = 0.05;   
 
 let state = { balance: 0, transactions: [], expenses: [], recipients: [] };
 
@@ -15,7 +15,7 @@ function loadState() {
   try {
     const s = localStorage.getItem("ofw-padala-v2");
     if (s) state = { ...state, ...JSON.parse(s) };
-  } catch { /* use defaults */ }
+  } catch {  }
 }
 function saveState() {
   localStorage.setItem("ofw-padala-v2", JSON.stringify(state));
@@ -150,6 +150,7 @@ function renderRecipients() {
   }
 
   grid.className = "recipients-grid";
+  grid.style.padding = "20px";
   grid.innerHTML = state.recipients.map(r => `
     <div class="recipient-card">
       <div class="rc-top">
@@ -444,28 +445,29 @@ function renderExpenseSummary() {
   const now     = new Date();
   const monthEx = state.expenses.filter(e => { const d = new Date(e.date); return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear(); });
   const el      = document.getElementById("expense-summary");
-  if (monthEx.length === 0) { el.innerHTML = `<div class="empty" style="padding:20px">Nothing logged this month</div>`; return; }
+  if (monthEx.length === 0) { el.innerHTML = `<div style="color:#6677aa;font-size:13px;padding:20px 0">Nothing logged this month</div>`; return; }
 
   const byCat = {};
   monthEx.forEach(e => { byCat[e.category] = (byCat[e.category] || 0) + e.amount; });
   const total  = monthEx.reduce((s, e) => s + e.amount, 0);
   const sorted = Object.entries(byCat).sort((a, b) => b[1] - a[1]);
-  const shades = ["#111","#333","#555","#777","#999","#bbb"];
+  const barColors = ["#e8734a","#5b8dee","#44c9a2","#f0c040","#b06fe3","#66aadd"];
 
-  el.innerHTML = `<div style="margin-bottom:14px">
-      <div style="font-size:11px;color:#aaa">Total this month</div>
-      <div style="font-size:22px;font-weight:800;color:#111;letter-spacing:-.5px">${fmt(total)}</div>
+  el.innerHTML = `<div style="margin-bottom:18px">
+      <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:#8899bb;margin-bottom:4px">Total This Month</div>
+      <div style="font-size:30px;font-weight:800;color:#fff;letter-spacing:-.5px">${fmt(total)}</div>
     </div>
-    <div style="display:flex;flex-direction:column;gap:10px">
+    <div style="display:flex;flex-direction:column;gap:12px">
       ${sorted.map(([cat, amt], i) => {
         const pct = Math.round((amt / total) * 100);
+        const color = barColors[i % barColors.length];
         return `<div>
-          <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px">
-            <span style="color:#555;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(cat)}</span>
-            <span style="font-weight:700;color:#111">${pct}%</span>
+          <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px">
+            <span style="color:#c8d8f0;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(cat)}</span>
+            <span style="font-weight:700;color:#fff">${pct}%</span>
           </div>
-          <div style="background:#efefef;border-radius:99px;height:5px">
-            <div style="background:${shades[i % shades.length]};height:5px;border-radius:99px;width:${pct}%"></div>
+          <div style="background:#2d3d60;border-radius:99px;height:6px">
+            <div style="background:${color};height:6px;border-radius:99px;width:${pct}%"></div>
           </div>
         </div>`;
       }).join("")}
@@ -487,7 +489,10 @@ function renderExpenseList() {
       <td>${escHtml(e.category)}</td>
       <td style="color:#aaa">${escHtml(e.desc || "—")}</td>
       <td class="right td-bold">${fmt(e.amount)}</td>
-      <td class="center"><button class="btn-danger" onclick="deleteExpense('${e.id}')">Delete</button></td>
+      <td class="center" style="display:flex;gap:6px;justify-content:center">
+        <button class="btn-edit" onclick="openEditExpense('${e.id}')">Edit</button>
+        <button class="btn-danger" onclick="deleteExpense('${e.id}')">Delete</button>
+      </td>
     </tr>`).join("")}</tbody>
   </table>`;
 }
@@ -495,6 +500,39 @@ function renderExpenseList() {
 function deleteExpense(id) {
   state.expenses = state.expenses.filter(e => e.id !== id);
   saveState(); renderExpenses(); showToast("Entry deleted");
+}
+
+function openEditExpense(id) {
+  const e = state.expenses.find(ex => ex.id === id);
+  if (!e) return;
+  document.getElementById("edit-expense-id").value       = id;
+  document.getElementById("edit-exp-date").value         = e.date;
+  document.getElementById("edit-exp-category").value     = e.category;
+  document.getElementById("edit-exp-amount").value       = e.amount;
+  document.getElementById("edit-exp-desc").value         = e.desc || "";
+  document.getElementById("edit-expense-modal").classList.add("open");
+}
+
+function closeEditExpense() {
+  document.getElementById("edit-expense-modal").classList.remove("open");
+}
+
+function saveEditExpense() {
+  const id     = document.getElementById("edit-expense-id").value;
+  const amount = parseFloat(document.getElementById("edit-exp-amount").value);
+  const date   = document.getElementById("edit-exp-date").value;
+  if (!amount || amount < 1) { showToast("Please enter a valid amount"); return; }
+  if (!date)                 { showToast("Please select a date"); return; }
+  const idx = state.expenses.findIndex(e => e.id === id);
+  if (idx === -1) return;
+  state.expenses[idx] = {
+    ...state.expenses[idx],
+    date,
+    category: document.getElementById("edit-exp-category").value,
+    amount,
+    desc: document.getElementById("edit-exp-desc").value.trim(),
+  };
+  saveState(); renderExpenses(); closeEditExpense(); showToast("Entry updated!");
 }
 
 function renderExpenseChart(containerId) {
