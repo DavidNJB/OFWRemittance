@@ -1,27 +1,18 @@
-const MORPH_MAINNET = {
-  chainId: "0xB02",
-  chainName: "Morph Mainnet",
-  nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
-  rpcUrls: ["https://rpc.morphl2.io"],
-  blockExplorerUrls: ["https://explorer.morphl2.io"],
-};
-const MORPH_HOLESKY = {
-  chainId: "0xAFA",
-  chainName: "Morph Holesky Testnet",
-  nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
-  rpcUrls: ["https://rpc-holesky.morphl2.io"],
-  blockExplorerUrls: ["https://explorer-holesky.morphl2.io"],
-};
+// 1. The Addresses you just deployed
+const padalaAddress = "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512";
+const tokenAddress = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
 
-const STABLECOINS = {
-  "USDT.e": { address: "0xc7D67A9cBB121b3b0b9c053DD9f469523243379A", decimals: 6 },
-  "USDC.e": { address: "0xe34c91815d7fc18A9e2148bcD4241d0a5848b693", decimals: 6 },
-};
+// 2. The ABIs (Application Binary Interfaces) matching your exact contracts
+const padalaABI = [
+    "function sendPadala(bytes32 _txId, address _recipient, uint256 _amount, address _token) external",
+    "function claimPadala(bytes32 _txId) external",
+    "function remittances(bytes32) external view returns (address sender, address recipient, uint256 amount, address token, bool isCompleted)"
+];
 
-//Minimal ERC-20 ABI
-const ERC20_ABI = [
-  "function balanceOf(address) view returns (uint256)",
-  "function transfer(address to, uint256 amount) returns (bool)",
+const tokenABI = [
+    "function approve(address spender, uint256 amount) external returns (bool)",
+    "function balanceOf(address account) external view returns (uint256)",
+    "function transfer(address to, uint256 amount) external returns (bool)"
 ];
 
 //Wallet State
@@ -81,24 +72,35 @@ async function connectWallet() {
   }
 }
 
-async function switchToMorph(testnet) {
-  const cfg = testnet ? MORPH_HOLESKY : MORPH_MAINNET;
+async function switchToMorph() {
+  // 1. Define your local Hardhat network blueprint
+  const HARDHAT_LOCAL = {
+    chainId: "0x7a69", // 31337 in hexadecimal
+    chainName: "Hardhat Local Override",
+    rpcUrls: ["http://127.0.0.1:8545"],
+    nativeCurrency: { name: "ETH", symbol: "ETH", decimals: 18 }
+  };
+
   try {
+    // 2. Ask MetaMask to switch to the Hardhat network
     await window.ethereum.request({
       method: "wallet_switchEthereumChain",
-      params: [{ chainId: cfg.chainId }],
+      params: [{ chainId: HARDHAT_LOCAL.chainId }],
     });
   } catch (e) {
+    // 3. If MetaMask doesn't have the network, add it automatically
     if (e.code === 4902 || e.code === -32603) {
       await window.ethereum.request({
         method: "wallet_addEthereumChain",
-        params: [cfg],
+        params: [HARDHAT_LOCAL],
       });
     }
   }
-  const net       = await wallet.provider.getNetwork();
-  wallet.chainId  = Number(net.chainId);
-  wallet.signer   = await wallet.provider.getSigner();
+
+  // 4. Finish setting up the wallet state for your UI
+  const net = await wallet.provider.getNetwork();
+  wallet.chainId = Number(net.chainId);
+  wallet.signer = await wallet.provider.getSigner();
   await loadBalances();
   renderWalletUI();
   renderSendOnchainSection();
@@ -113,13 +115,16 @@ function resetWallet() {
 //Load Token Balances
 async function loadBalances() {
   wallet.balances = {};
-  if (!isOnMainnet()) return;
-  for (const [sym, tok] of Object.entries(STABLECOINS)) {
-    try {
-      const c   = new ethers.Contract(tok.address, ERC20_ABI, wallet.provider);
-      const raw = await c.balanceOf(wallet.address);
-      wallet.balances[sym] = ethers.formatUnits(raw, tok.decimals);
-    } catch { wallet.balances[sym] = "0.00"; }
+  try {
+    // Connect to the MockToken using the variables we defined at the top of the file
+    const contract = new ethers.Contract(tokenAddress, tokenABI, wallet.provider);
+    const raw = await contract.balanceOf(wallet.address);
+    
+    // Our MockToken uses 6 decimals, so we format it accordingly
+    wallet.balances["USDT"] = ethers.formatUnits(raw, 6);
+  } catch (err) {
+    console.error("Error fetching balance:", err);
+    wallet.balances["USDT.e"] = "0.00";
   }
 }
 
@@ -128,23 +133,40 @@ async function loadBalances() {
 // toAddress: recipient 0x wallet on Morph
 async function sendOnchain(toAddress, phpAmount, tokenSym) {
   if (!isConnected())             { showToast("Connect your wallet first"); return null; }
-  if (!isOnMainnet())             { showToast("Switch to Morph Mainnet to send stablecoins"); return null; }
   if (!ethers.isAddress(toAddress)) { showToast("Invalid recipient wallet address"); return null; }
 
-  const tok    = STABLECOINS[tokenSym];
   const usdAmt = phpAmount * RATES.USD;          // PHP → USD ≈ USDT
   const feeAmt = usdAmt * 0.02;                 // 2% OFW Padala fee
   const netAmt = usdAmt - feeAmt;
-  const rawAmt = ethers.parseUnits(netAmt.toFixed(tok.decimals), tok.decimals);
+  
+  // Our local Fake USDT uses exactly 6 decimals
+  const rawAmt = ethers.parseUnits(netAmt.toFixed(6), 6);
 
   try {
-    const contract = new ethers.Contract(tok.address, ERC20_ABI, wallet.signer);
-    showToast("Please confirm the transaction in MetaMask…");
-    const tx = await contract.transfer(toAddress, rawAmt);
+    // 1. Connect to both of our local contracts
+    const tokenContract = new ethers.Contract(tokenAddress, tokenABI, wallet.signer);
+    const padalaContract = new ethers.Contract(padalaAddress, padalaABI, wallet.signer);
+
+    // 2. STEP ONE: Approve the OFWPadala contract to handle your USDT
+    showToast("Step 1: Please approve the token allowance in MetaMask...");
+    const approveTx = await tokenContract.approve(padalaAddress, rawAmt);
+    await approveTx.wait(1);
+
+    // 3. STEP TWO: Execute the actual Padala smart contract
+    showToast("Step 2: Please confirm the Padala transaction in MetaMask...");
+    
+    // Generate a unique ID for this remittance record
+    const txId = ethers.id(Date.now().toString()); 
+    
+    // Execute the function we wrote in your OFWPadala.sol file!
+    const tx = await padalaContract.sendPadala(txId, toAddress, rawAmt, tokenAddress);
+    
     showToast("Transaction submitted — awaiting confirmation…");
     const receipt = await tx.wait(1);       // wait for 1 confirmation
+    
     await loadBalances();
     renderWalletUI();
+    
     return {
       txHash:    receipt.hash,
       netUsd:    netAmt.toFixed(2),
@@ -173,12 +195,17 @@ function renderWalletUI() {
   btn.style.display  = "none";
   area.style.display = "flex";
 
+  // Added Hardhat Local (31337) to the UI labels!
   const netLabel = wallet.chainId === 2818 ? "Morph Mainnet"
                  : wallet.chainId === 2810 ? "Morph Holesky"
+                 : wallet.chainId === 31337 ? "Hardhat Local"
                  : "Unknown Network";
+                 
   const netColor = wallet.chainId === 2818 ? "#1a6e1a"
                  : wallet.chainId === 2810 ? "#8a6200"
+                 : wallet.chainId === 31337 ? "#0066cc" // Blue for local dev
                  : "#cc2222";
+                 
   const short = wallet.address.slice(0, 6) + "…" + wallet.address.slice(-4);
 
   let balHtml = "";
@@ -186,8 +213,9 @@ function renderWalletUI() {
     const num = isNaN(Number(bal)) ? bal : parseFloat(bal).toFixed(2);
     balHtml += `<span class="wallet-bal">${num} ${sym}</span>`;
   }
+  
   if (!Object.keys(wallet.balances).length) {
-    balHtml = `<span class="wallet-bal" style="color:#aaa">No stablecoins on testnet</span>`;
+    balHtml = `<span class="wallet-bal" style="color:#aaa">No stablecoins</span>`;
   }
 
   area.innerHTML = `
