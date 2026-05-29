@@ -1,148 +1,204 @@
-# OFW Padala 🇵🇭
+# OFW Padala
 
-A Cross-Border Remittance and Expense Monitoring Platform for Overseas Filipino Workers powered by Morph L2.
+### Cross-Border Remittance and Expense Tracking Platform Powered by Morph L2
 
 ## Overview
 
-OFW Padala is a blockchain-powered remittance platform designed to help Overseas Filipino Workers (OFWs) send money home faster, cheaper, and with full transparency.
+OFW Padala is a blockchain-powered remittance platform designed to help Overseas Filipino Workers (OFWs) send money home faster, cheaper, and more transparently using Morph L2 and stablecoins.
 
-Traditional remittance systems often involve:
-- High transfer fees
-- Slow processing times
-- Poor exchange rates
-- Dependency on physical remittance centers
-- Limited transaction visibility
+The platform combines decentralized payments with modern financial tracking tools, allowing users to securely transfer funds, monitor expenses, and manage remittance activity in a single web application.
 
-OFW Padala solves these problems by leveraging Morph L2 and stablecoins to create a seamless cross-border payment experience.
+Unlike traditional remittance systems that rely on intermediaries and physical outlets, OFW Padala enables direct wallet-to-wallet transactions through blockchain infrastructure.
 
 ---
 
-## Problem
+# The Problem
 
-Over **10 million OFWs** send more than **$36 billion USD** annually to the Philippines, contributing nearly **9% of the country’s GDP**.
+Millions of Overseas Filipino Workers support their families through regular remittances. However, traditional remittance channels still present several major challenges:
 
-Despite this massive contribution, many workers still face:
-- 3–7% hidden remittance fees
-- 1–3 business day delays
-- Lack of transfer transparency
-- Complicated cash-out systems
+* High transfer and processing fees
+* Delayed international transactions
+* Poor exchange rates
+* Limited transparency
+* Dependency on remittance centers
+* Lack of integrated expense monitoring
 
-Every peso matters for families relying on overseas income.
-
----
-
-## Solution
-
-OFW Padala enables OFWs to:
-- Send stablecoins instantly through Morph L2
-- Track transfers transparently onchain
-- Manage recipients securely
-- Monitor remittance history and expenses
-- Reduce transfer costs significantly
-
-The platform acts as the experience layer, while Morph L2 serves as the payment infrastructure.
+For many OFWs, every transaction fee directly impacts the financial support received by their families.
 
 ---
 
-## How It Works
+# The Solution
+
+OFW Padala leverages Morph L2 to provide a modern alternative for cross-border payments.
+
+The platform allows users to:
+
+* Send stablecoins through Morph L2
+* Connect wallets using MetaMask
+* Track remittance activity in real time
+* Monitor expenses and spending history
+* Manage recipients securely
+* View transparent onchain transactions
+
+By combining blockchain remittance with expense monitoring, OFW Padala helps users maintain better financial visibility while reducing transaction costs.
+
+---
+
+# Core Features
+
+## Wallet Integration
+
+* MetaMask wallet connection
+* Secure Web3 authentication
+* EVM-compatible wallet support
+
+## Cross-Border Transfers
+
+* Stablecoin-based remittances
+* Fast onchain settlement
+* Transparent transaction records
+
+## Expense Monitoring
+
+* Remittance history tracking
+* Expense summaries
+* Transaction monitoring dashboard
+
+## Recipient Management
+
+* Save and manage recipients
+* Simplified repeat transfers
+* Improved remittance workflow
+
+## Responsive Interface
+
+* Mobile-friendly design
+* Accessible user experience
+* Modern dashboard interface
+
+---
+
+# How It Works
 
 1. User connects their MetaMask wallet
-2. User bridges USDT.e or USDC.e to Morph L2
-3. User selects or saves a recipient
+2. User accesses the Morph L2 network
+3. User selects or adds a recipient
 4. Stablecoins are transferred onchain
-5. Recipient receives funds with transparent transaction history
+5. Transaction details are recorded transparently
+6. Users can monitor remittance and expense activity through the dashboard
 
 ---
 
-## Why Morph L2?
+# Why Morph L2?
 
-OFW Padala uses Morph because it provides:
-- Near-instant transaction finality
-- Extremely low gas fees
-- Ethereum-backed security
-- Stablecoin compatibility
-- EVM wallet support
-- Transparent onchain transactions
+OFW Padala is powered by Morph L2 because it provides:
 
-These features make Morph ideal for high-frequency remittance use cases.
+* Low transaction fees
+* Fast transaction finality
+* Ethereum-level security
+* Stablecoin compatibility
+* EVM ecosystem support
+* Scalable payment infrastructure
 
----
-
-## Current Features (Phase 0)
-
-- Live Morph Mainnet transfers
-- Wallet integration (MetaMask)
-- Recipient management
-- Multi-currency transfer preview
-- Transaction history tracking
-- Responsive web interface
+These features make Morph an ideal blockchain solution for global remittance systems and payment applications.
 
 ---
 
-## Roadmap
+# Current Development Stage
 
-### Phase 1 — Backend Infrastructure
-- Netlify Database integration
-- User authentication
-- Serverless APIs
-- Live exchange rates
+## Phase 0 — MVP
 
-### Phase 2 — Smart Contract Features
-- Escrow-based transfers
-- Recurring scheduled remittances
-- Batch sending
-- Webhook notifications
+The current version includes:
 
-### Phase 3 — Philippine Off-Ramp
-- GCash integration
-- Maya integration
-- Direct PHP cash-out
-
-### Phase 4 — Expansion
-- Savings vaults
-- Expense accountability tools
-- Mobile PWA support
-- Additional remittance corridors
+* Wallet connection
+* Morph network integration
+* Stablecoin remittance functionality
+* Expense tracking dashboard
+* Recipient management
+* Responsive frontend interface
 
 ---
 
-## Tech Stack
+# Future Roadmap
 
-- HTML
-- CSS
-- JavaScript
-- Morph L2
-- MetaMask
-- Stablecoins (USDT.e / USDC.e)
-- Netlify
+## Phase 1 — Backend Infrastructure
+
+* Database integration
+* User accounts and authentication
+* Serverless API architecture
+* Real-time exchange rates
+
+## Phase 2 — Smart Contract Features
+
+* Escrow transactions
+* Scheduled remittances
+* Batch payments
+* Automated notifications
+
+## Phase 3 — Philippine Off-Ramp Integration
+
+* GCash support
+* Maya support
+* PHP cash-out services
+
+## Phase 4 — Platform Expansion
+
+* Savings vaults
+* Family budgeting tools
+* Mobile PWA application
+* Expanded remittance corridors
 
 ---
 
-## Demo
+# Tech Stack
 
-### Live App
-https://ofw-padala--clowningaround2.replit.app
-OR
-https://website-replica--nightcore21musi.replit.app
+* HTML
+* CSS
+* JavaScript
+* Morph L2
+* MetaMask
+* Stablecoins (USDT.e / USDC.e)
+* Netlify
+* Web3 Wallet Integration
 
-### Morph Build in Payments Hackathon
+---
+
+# Live Demo
+
+## Main Application
+
+https://ofw-padala--clowningaround2.replit.app/
+
+## Alternative Deployment
+
+https://website-replica--nightcore21musi.replit.app/
+
+---
+
+# Hackathon Submission
+
+## Morph Build in Payments Hackathon
+
 https://blog.morph.network/build-in-payments-hackathon-build-what-moves-money/
 
 ---
 
-## File
-### Gdrive Link:
+# Project Files
+
+## Google Drive
+
 https://drive.google.com/file/d/1i8h9CiLowbWN4EIrj8jLz7JW_WzFQvIN/view?usp=sharing
----
-
-## Vision
-
-OFW Padala aims to rebuild remittance systems around the people who depend on them most — Overseas Filipino Workers and their families.
-
-The infrastructure already exists. Morph L2 provides the speed, affordability, and stablecoin ecosystem needed to make global remittances more accessible and transparent.
 
 ---
 
-## Created For
+# Vision
+
+OFW Padala aims to modernize the remittance experience for Overseas Filipino Workers by making international money transfers more affordable, transparent, and accessible through blockchain technology.
+
+By leveraging Morph L2, the platform demonstrates how decentralized infrastructure can improve financial services for millions of Filipino families who rely on overseas income.
+
+---
+
+# Created For
 
 Morph Build in Payments Hackathon
